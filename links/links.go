@@ -1,19 +1,43 @@
 package links
 
 import (
+	"compress/gzip"
 	"fmt"
 	"net/http"
 	"golang.org/x/net/html"
+	"io"
 )
 
 // Extract makes an HTTP GET request to the specified URL, parses
 // the response as HTML, and returns the links in the HTML document.
 func Extract(url string)([]string, error){
-	resp, err := http.Get(url)
+	client := new(http.Client)
+	request, err := http.NewRequest("Get", url, nil)
+	if err != nil {
+		return nil, err
+	}
+	request.Header.Add("Accept-Encoding", "gzip")
+
+	resp, err := client.Do(request)
 	if err != nil {
 		//log.Fatal(err)
 		return nil, err
 	}
+	defer resp.Body.Close()
+
+	// Check that the server actual sent compressed data
+	var reader io.ReadCloser
+	switch resp.Header.Get("Content-Encoding") {
+	case "gzip":
+			reader, err = gzip.NewReader(resp.Body)
+			if err != nil {
+					return nil, err
+			}
+			defer reader.Close()
+	default:
+			reader = resp.Body
+	}
+
 	if resp.StatusCode != http.StatusOK {
 		resp.Body.Close()
 		return nil, fmt.Errorf("getting %s: %s", url, resp.Status)

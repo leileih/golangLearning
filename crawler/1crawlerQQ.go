@@ -35,7 +35,6 @@ func main() {
                     fmt.Println("done")
                     return
                 }
-
                 foundLinks := crawl(link,depth)
                 go func() { worklist <- foundLinks }()
                 depth++

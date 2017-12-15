@@ -41,7 +41,7 @@ func crawl(url string, depth int, wg *sync.WaitGroup) {
 }
 
 func main() {
-	flag.IntVar(&maxDepth, "d", 3, "max crawl depth")
+	flag.IntVar(&maxDepth, "d", 2, "max crawl depth")
 	flag.Parse()
 	wg := &sync.WaitGroup{}
 	for _, link := range flag.Args() {

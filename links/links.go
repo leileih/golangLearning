@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/http/httputil"
 
 	"golang.org/x/net/html"
 )
@@ -18,13 +19,35 @@ func Extract(url string) ([]string, error) {
 
 	request, err := http.NewRequest("Get", url, nil)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error when requesting %s: %s", url, err)
 	}
 	request.Header.Add("Accept-Encoding", "gzip")
 
+	// Save a copy of this request for debugging.
+	requestDump, err := httputil.DumpRequest(request, true)
+	if err != nil {
+		fmt.Println("error when debugging request: ", url, err)
+	}
+	fmt.Println(string(requestDump))
+
 	response, err := client.Do(request)
 	if err != nil {
-		return nil, err
+		//fmt.Println("shown - error here")
+		return nil, fmt.Errorf("response from %s: %s", url, err)
+	}
+
+	// Save a copy of this response for debugging.
+	responseDump, err := httputil.DumpResponse(response, true)
+	if err != nil {
+		fmt.Println("error when debugging response: ", url, err)
+	}
+	fmt.Println(string(responseDump))
+
+	// 判断 response 状态应该放在读取 response 之后
+	if response.StatusCode != http.StatusOK {
+		//fmt.Println(string(response.Status))
+		response.Body.Close()
+		return nil, fmt.Errorf("getting %s: %s", url, response.Status)
 	}
 	defer response.Body.Close()
 
@@ -36,27 +59,21 @@ func Extract(url string) ([]string, error) {
 		if err != nil {
 			return nil, fmt.Errorf("reading gzip page %s: %v", url, err)
 		}
-		// 这里可以直接读取response吗？gzip 格式的 response可以直接读取吗？
-		// 如果 response 可以直接读取，那么不需要放在 case “gzip” 里
-		// if response.StatusCode != http.StatusOK {
-		// 	response.Body.Close()
-		// 	return nil, fmt.Errorf("getting %s: %s", url, response.Status)
-		// }
 		defer reader.Close()
 	default:
 		reader = response.Body
 	}
 
-	// ???????????????????????????
-	// 如果可以直接读取不需要改动
-	if response.StatusCode != http.StatusOK {
-		response.Body.Close()
-		return nil, fmt.Errorf("getting %s: %s", url, response.Status)
-	}
-	// 同理，这里的response可不可以直接读取
-	// 如果可以直接读取不需要改动
-	doc, err := html.Parse(response.Body)
-	response.Body.Close()
+	// // 判断 response 状态应该放在读取response之后
+	// if response.StatusCode != http.StatusOK {
+	// 	response.Body.Close()
+	// 	return nil, fmt.Errorf("getting %s: %s", url, response.Status)
+	// }
+
+	// html.Parse 读取的是 io.Reader，即 response.Body 和 reader 同类型
+	// 这里可以直接读取 html.Parse(reader)
+	doc, err := html.Parse(reader)
+	//response.Body.Close()
 	if err != nil {
 		return nil, fmt.Errorf("parsing %s as HTML: %v", url, err)
 	}

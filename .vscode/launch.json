@@ -23,7 +23,7 @@
             "program": "${fileDirname}",
             ///Users/huleilei/Documents/go-workspace/src/practice/golangLearning/.vscode/launch.json
             "env": {},
-            "args": [],
+            "args": ["http://www.qq.com"],
             "showLog": true
         }
     ]

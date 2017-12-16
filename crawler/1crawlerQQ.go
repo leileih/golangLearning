@@ -45,6 +45,7 @@ func main() {
 	flag.Parse()
 	wg := &sync.WaitGroup{}
 	for _, link := range flag.Args() {
+		fmt.Println("used for breakpoint")
 		wg.Add(1)
 		go crawl(link, 0, wg)
 	}

@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/signal"
 	"practice/golangLearning/links"
 	"sync"
+	"syscall"
 )
 
 // tokens is a counting semaphore used to
@@ -18,6 +20,7 @@ var seenLock = sync.Mutex{}
 
 func crawl(url string, depth int, wg *sync.WaitGroup) {
 	defer wg.Done()
+	// print output to console
 	fmt.Println(depth, url)
 	if depth >= maxDepth {
 		return
@@ -42,12 +45,13 @@ func crawl(url string, depth int, wg *sync.WaitGroup) {
 }
 
 func main() {
-	// c := make(chan os.Signal, 1)
-	// signal.Notify(c, syscall.SIGTERM, syscall.SIGTRAP)
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, syscall.SIGTERM, os.Interrupt)
 	// Block until a signal is received.
-	// fmt.Println("启动")
-	// s := <-c
-	// fmt.Println("Got signal: ", s)
+	fmt.Println("启动")
+	s := <-c
+	fmt.Println("Got signal: ", s)
+	exitFunc()
 
 	// flag 包实现了命令行参数的解析
 	flag.IntVar(&maxDepth, "d", 2, "max crawl depth")
@@ -77,7 +81,7 @@ func main() {
 // method after received SIGTERM
 func exitFunc() {
 	fmt.Println("开始退出...")
-	fmt.Println("执行清理...")
+	fmt.Println("保存进度...")
 	fmt.Println("结束退出...")
 	os.Exit(0)
 }

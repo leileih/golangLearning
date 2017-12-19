@@ -5,10 +5,8 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"os/signal"
 	"practice/golangLearning/links"
 	"sync"
-	"syscall"
 )
 
 // tokens is a counting semaphore used to
@@ -45,13 +43,13 @@ func crawl(url string, depth int, wg *sync.WaitGroup) {
 }
 
 func main() {
-	c := make(chan os.Signal, 1)
-	signal.Notify(c, syscall.SIGTERM, os.Interrupt)
+	// c := make(chan os.Signal, 1)
+	// signal.Notify(c, syscall.SIGTERM, os.Interrupt)
 	// Block until a signal is received.
-	fmt.Println("启动")
-	s := <-c
-	fmt.Println("Got signal: ", s)
-	exitFunc()
+	// fmt.Println("启动")
+	// s := <-c
+	// fmt.Println("Got signal: ", s)
+	// exitFunc()
 
 	// flag 包实现了命令行参数的解析
 	flag.IntVar(&maxDepth, "d", 2, "max crawl depth")

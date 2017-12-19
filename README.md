@@ -17,4 +17,5 @@
 未完成
 
 1. 离线缓存， protobuf 编码，warn 提示
-2. go test
+2. 网络读取错误 3 次重试
+3. go test

@@ -1,12 +1,16 @@
 package main
 
 import (
+	"encoding/csv"
+	"exercise/golangLearning/links"
+	"exercise/golangLearning/protobuf"
 	"flag"
 	"fmt"
 	"log"
 	"os"
-	"practice/golangLearning/links"
 	"sync"
+
+	"github.com/golang/protobuf/proto"
 )
 
 // tokens is a counting semaphore used to
@@ -18,8 +22,62 @@ var seenLock = sync.Mutex{}
 
 func crawl(url string, depth int, wg *sync.WaitGroup) {
 	defer wg.Done()
+
 	// print output to console
 	fmt.Println(depth, url)
+
+	// write to file -- start
+	// transfer result to protobuf format
+	link := protobuf.Link{
+		Depth: int32(depth),
+		Url:   url,
+	}
+
+	// 对数据进行序列化
+	data, err := proto.Marshal(&link)
+	if err != nil {
+		log.Fatalln("Mashal data error:", err)
+	}
+
+	// create output file
+	file, err := os.Create("result.csv")
+	if err != nil {
+		log.Fatalln("Cannot create file", err)
+	}
+	defer file.Close()
+
+	// write to csv file
+	w := csv.NewWriter(file)
+	defer w.Flush()
+	// convert []byte to []strings
+	// might be improved
+	for depth, url := range data {
+		d := string(depth)
+		u := string(url)
+		output := [][]string{
+			{d, u},
+		}
+		w.WriteAll(output)
+	}
+	// w.WriteAll(output)
+
+	if err := w.Error(); err != nil {
+		log.Fatalln("error writing csv:", err)
+	}
+	// write to file -- end
+
+	/*
+		// 对已经序列化的数据进行反序列化
+		// 验证数据序列化是否正确
+		var target protobuf.Link
+		err = proto.Unmarshal(data, &target)
+		if err != nil {
+			log.Fatalln("UnMashal data error:", err)
+		}
+
+		// fmt.Println("depth: ", target.Depth, "url: ", target.Url)
+	*/
+
 	if depth >= maxDepth {
 		return
 	}
@@ -52,12 +110,11 @@ func main() {
 	// exitFunc()
 
 	// flag 包实现了命令行参数的解析
-	flag.IntVar(&maxDepth, "d", 2, "max crawl depth")
+	flag.IntVar(&maxDepth, "d", 3, "max crawl depth")
 	flag.Parse()
 	wg := &sync.WaitGroup{}
 	for _, link := range flag.Args() {
 		// tlink := link
-		//fmt.Println("used for breakpoint")
 		wg.Add(1)
 		// go func() {
 		// 	fmt.Println("start go func")

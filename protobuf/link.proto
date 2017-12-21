@@ -1,0 +1,11 @@
+syntax = "proto3";
+package protobuf;
+
+message link{
+    int32 depth = 1;
+    string url = 2;
+}
+
+message all_link{
+    repeated link Link = 1;
+}
